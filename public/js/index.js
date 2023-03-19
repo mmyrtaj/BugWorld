@@ -20,7 +20,7 @@ class WorldCell {
     obstructed;
     bug = false;
     food;
-    marker;
+    marker = [];
     base;
     constructor(type) {
         if (typeof type == Number) {
@@ -69,10 +69,13 @@ class WorldCell {
         return this.base != color;
     }
     setMarker(color, value) {
-        this.marker = [color, value];
+        this.marker.push([color, value]);
     }
     clearMarker(color, value) {
-        this.marker = [];
+        let index = this.marker.indexOf([color, value]);
+        if (index > -1) {
+            this.marker.splice(index, 1);
+        }
     }
     isFriendlyMarker(color) {
         return color == this.marker[0];
@@ -80,32 +83,69 @@ class WorldCell {
     isEnemyMarker(color) {
         return color != this.marker[0];
     }
-    toString() {
-        console.log(this.toString());
-    }
 }
 class World {
     x;
     y;
     map = [];
-    cellAt(position) { }
-    adjacent(postion, direction) { }
-    turn(direction, turn) { }
-    sensedCell(position, direction) { }
-    isObstructedAt(position) { }
-    isOccupiedAt(position) { }
-    setBugAt(position, Bug) { }
-    getBugAt(position) { }
-    removeBugAt(position) { }
-    setFoodAt(position, amount) { }
-    getFoodAt(position) { }
-    isFriendlyBaseAt(position, color) { }
-    isEnemyBaseAt(position, color) { }
-    setMarkerAt(position, color, value) { }
-    clearMarkerAt(position, color, value) { }
-    isFriendlyMarkerAt(position, color, value) { }
-    isEnemyMarkerAt(position, color, value) { }
-    toString() { }
+    cellAt(x, y) {
+        return this.map[x][y];
+    }
+    adjacent(x, y, direction) {
+        switch (direction) {
+            case 0:
+                return this.map[x + 1][y];
+            case 1:
+                return this.map[x + 1][y + 1];
+            case 2:
+                return this.map[x][y + 1];
+            case 3:
+                return this.map[x - 1][y];
+            case 4:
+                return this.map[x][y - 1];
+            case 5:
+                return this.map[x + 1][y - 1];
+        }
+    }
+    isObstructedAt(x, y) {
+        return this.map[x][y].isObstructed();
+    }
+    isOccupiedAt(x, y) {
+        return this.map[x][y].isOccupied();
+    }
+    setBugAt(x, y, Bug) {
+        this.map[x][y].bug = Bug;
+    }
+    getBugAt(x, y) {
+        this.map[x][y].getBug;
+    }
+    removeBugAt(x, y) {
+        this.map[x][y].removeBug();
+    }
+    setFoodAt(x, y, amount) {
+        this.map[x][y].setFood(amount);
+    }
+    getFoodAt(x, y) {
+        return this.map[x][y].food
+    }
+    isFriendlyBaseAt(x, y, color) {
+        return this.map[x][y].isFriendlyBase(color);
+    }
+    isEnemyBaseAt(x, y, color) {
+        return this.map[x][y].isEnemyBase(color);
+    }
+    setMarkerAt(x, y, color, value) {
+        return this.map[x][y].setMarker(color, value);
+    }
+    clearMarkerAt(x, y, color, value) {
+        return this.map[x][y].clearMarker(color, value);
+    }
+    isFriendlyMarkerAt(x, y, color) {
+        return this.map[x][y].isFriendlyMarker(color);
+    }
+    isEnemyMarkerAt(x, y, color) {
+        return this.map[x][y].isEnemyMarker(color);
+    }
 }
 class Simulator {
     engine;
@@ -218,14 +258,36 @@ function worldCheck(map) {
             alert("Error: One of the bug swarms is missing");
             clearValueOfElement('mapInput');
             world.map = [];
+            break endcheck;
         }
-        for (let i = 0; i < world.x; i++) {
-            for (let j = 0; j < world.y; j++) {
-                // conditional to check if the swarms are connected approriately
+        for (let i = 1; i < world.x - 2; i++) {
+            for (let j = 1; j < world.y - 2; j++) {
+                let c = world.map[i][j];
+                let foundBase = 0;
+                // checking for red bases if they are connected
+                if (c == "+") {
+                    for (let k = 0; k < 6; k++) {
+                        if (world.map[i][j].adjacent(i, j, k).isFriendlyBase("Red")) {
+                            foundBase++;
+                        }
+                    }
+                    // checking for black bases if they are connected
+                } else if (c == "-") {
+                    for (let k = 0; k < 6; k++) {
 
-
+                        if (world.map[i][j].adjacent(i, j, k).isFriendlyBase("Black")) {
+                            foundBase++;
+                        }
+                    }
+                }
+                if (foundBase == 0) {
+                    alert("Error: Swarm have to be linked!");
+                    clearValueOfElement('mapInput');
+                    world.map = [];
+                    break endcheck;
+                }
             }
+
         }
     }
-    console.log(world.map);
 }
